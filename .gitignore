@@ -1,0 +1,11 @@
+# Ignore Python junk
+__pycache__/
+*.pyc
+
+# Ignore data, logs and credentials
+.env
+logs/
+data/
+
+# Virtual envs
+.venv/
