@@ -51,8 +51,8 @@ tasks/
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/your-username/mysql-to-snowflake-pipeline.git
-cd mysql-to-snowflake-pipeline
+git clone https://github.com/S-Gopisetty/highlevel_data_pipeline.git
+cd highlevel_data_pipeline
 ```
 
 ### 2. Set Up Environment
