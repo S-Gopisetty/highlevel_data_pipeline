@@ -9,10 +9,10 @@ This project implements a robust data engineering pipeline that continuously ing
 - Data transformation with cleaning and normalization
 - Chunked export to Parquet format
 - Uploads to Amazon S3
-- Loads into Snowflake using `COPY INTO`
+- Loads into Snowflake using `COPY INTO` and `MERGE`
 - Full logging and archival
 - Modular design integrated into Apache Airflow DAGs
-- Weekly full delete scan support
+- Weekly full delete scan support using a dedicated shadow file
 
 ---
 
@@ -35,13 +35,15 @@ src/
 
 dags/
 └── pipeline_mysql_dag.py
+└── weekly_mysql_deletion_dag.py
 
 tasks/
 ├── export_mysql_to_parquet.py
 ├── transform_parquet_data_mysql.py
 ├── upload_to_s3_mysql.py
 ├── load_to_warehouse_mysql.py
-└── archive_mysql_files_in_s3.py
+├── archive_mysql_files_in_s3.py
+└── weekly_delete_cdc.py
 ```
 
 ---
@@ -109,7 +111,7 @@ python src/archiving/archive_mysql_files_in_s3.py
 
 ### Option 2: Run with Airflow
 
-1. Add `AIRFLOW_HOME` in environment
+1. Set `AIRFLOW_HOME` in environment (if needed)
 2. Place DAG file inside `dags/`
 3. Start scheduler and webserver:
 
@@ -126,9 +128,9 @@ airflow webserver
 
 ## Logs
 
-Logs are written both to:
+Logs are written to:
 
-- `logs/` directory in project root (for each component)
+- `logs/` directory in project root
 - Airflow task logs (accessible via UI)
 
 ---
@@ -147,15 +149,19 @@ flowchart TD
 
 ---
 
-## Notes
+## Weekly Full Delete Detection
 
-- Runs every 5 minutes via Airflow
-- Weekly `full_delete_check` identifies hard deletes
-- Uses shadow file to maintain state and avoid unnecessary writes
-- Archives transformed + uploaded files with timestamps
+- Runs every Sunday via dedicated DAG
+- Uses `reviews_shadow_weekly.parquet` for full comparison
+- Detects deleted IDs and updates `deleted_reviews.parquet`
+- Snowflake script removes rows using this list
 
 ---
 
 ## License
 
 MIT
+
+---
+
+Maintained by **Surya**
