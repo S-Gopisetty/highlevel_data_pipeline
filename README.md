@@ -16,26 +16,52 @@ This project implements a robust data engineering pipeline that continuously ing
 
 ---
 
+# JSON to Snowflake Data Pipeline
+This project builds a weekly scheduled pipeline that ingests a large static JSON file (restaurant data), transforms and cleans the data, converts it to Parquet, uploads to S3, and loads it into a Snowflake table. The pipeline is orchestrated using Apache Airflow.
+
+---
+
+## Features
+
+- Streamed ingestion using `ijson`
+- Chunked Parquet export for performance
+- Pandas + Pandera schema validation
+- Error handling and detailed logging (local + Airflow UI)
+- Data archiving (JSON & Parquet)
+- S3 Upload + Snowflake `COPY INTO` load
+- Metrics and summary reporting
+- Weekly schedule using Airflow
+
+---
+
 ## Project Structure
 
 ```
 src/
 ├── ingestion/
 │   └── export_mysql_to_parquet.py
+│   └── ingest_json_to_parquet.py
 ├── transformation/
 │   └── transform_parquet_data_mysql.py
+│   └── transform_parquet_data_json.py
 ├── s3_upload/
 │   └── upload_to_s3_mysql.py
+│   └── upload_to_s3_json.py
 ├── loading/
 │   └── load_to_warehouse_mysql.py
+│   └── load_to_warehouse_json.py
 ├── archiving/
 │   └── archive_mysql_files_in_s3.py
+│   └── archive_json_files_in_s3.py
 ├── utils/
-│   └── db_config.py, suppress_warnings.py
+│   └── db_config.py
+│   └── suppress_warnings.py
+│   └── logger.py
 
 dags/
 └── pipeline_mysql_dag.py
 └── weekly_mysql_deletion_dag.py
+└── pipeline_json_dag.py
 
 tasks/
 ├── export_mysql_to_parquet.py
@@ -44,6 +70,11 @@ tasks/
 ├── load_to_warehouse_mysql.py
 ├── archive_mysql_files_in_s3.py
 └── weekly_delete_cdc.py
+├── ingest_json_task.py
+├── transform_parquet_task.py
+├── upload_s3_task.py
+├── load_snowflake_task.py
+└── archive_json_task.py
 ```
 
 ---
@@ -97,7 +128,7 @@ MYSQL_DB=your_db
 
 ---
 
-## Running the Pipeline
+## Running the MYSQL Pipeline
 
 ### Option 1: Run Manually
 
@@ -122,7 +153,7 @@ airflow scheduler
 airflow webserver
 ```
 
-4. Trigger the DAG via Airflow UI
+4. Trigger the DAG via Airflow UI (Visit `http://localhost:8080` and trigger the DAG.)
 
 ---
 
@@ -155,6 +186,79 @@ flowchart TD
 - Uses `reviews_shadow_weekly.parquet` for full comparison
 - Detects deleted IDs and updates `deleted_reviews.parquet`
 - Snowflake script removes rows using this list
+
+---
+
+## Running the JSON Pipeline
+
+### Option 1: Run Manually
+
+```bash
+python src/ingestion/ingest_json_to_parquet.py
+python src/transformation/transform_parquet_data_json.py
+python src/s3_upload/upload_to_s3_json.py
+python src/loading/load_to_warehouse_json.py
+python src/archiving/archive_json_files_in_s3.py
+```
+
+### Option 2: Run with Airflow
+
+1. Initialize Airflow:
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow
+airflow db init
+airflow users create --username admin --password admin --role Admin --firstname Admin --lastname User --email admin@example.com
+```
+
+2. Place `pipeline_json_dag.py` into `dags/`
+
+3. Start scheduler and webserver:
+```bash
+airflow scheduler
+airflow webserver
+```
+
+4. Visit `http://localhost:8080` and trigger the DAG.
+
+---
+
+## Logs
+
+- Logs are written to:
+  - `logs/` folder (local file-based logs)
+  - Airflow UI (via task instance logs)
+
+---
+
+## Data Flow
+
+```mermaid
+flowchart TD
+    A[JSON] --> B[export_mysql_to_parquet.py]
+    B --> C[transform_parquet_data_mysql.py]
+    C --> D[upload_to_s3_mysql.py]
+    D --> E[load_to_warehouse_mysql.py]
+    E --> F[archive_mysql_files_in_s3.py]
+    F --> G[Snowflake]
+```
+
+---
+
+## Monitoring
+
+- CSV reports with summary stats
+- Metrics CSV (`load_metrics_snowflake.csv`) after every Snowflake load
+- Invalid records stored in `logs/invalid_rows.log`
+
+---
+
+## Notes
+
+- Designed to run **once per week**
+- Assumes full overwrite of target Snowflake table after archival backup
+- Schema validation is enforced using Pandera
+- Source JSON is archived into a ZIP after ingestion
+- Parquet chunks are zipped and archived after Snowflake load
 
 ---
 
