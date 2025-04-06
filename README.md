@@ -88,7 +88,7 @@ git clone https://github.com/S-Gopisetty/highlevel_data_pipeline.git
 cd highlevel_data_pipeline
 ```
 
-### 2. Set Up Environment
+### 2. Set Up Environment(Use Python 3.11)
 
 ```bash
 python3 -m venv .venv
