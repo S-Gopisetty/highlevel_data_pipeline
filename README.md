@@ -106,7 +106,10 @@ AWS_ACCESS_KEY_ID=your_key
 AWS_SECRET_ACCESS_KEY=your_secret
 AWS_REGION=your_region
 S3_BUCKET_NAME=your_bucket_name
-S3_REVIEW_PREFIX=swiggy/reviews_parquet/
+S3_PREFIX="swiggy/parquet/"
+S3_REVIEW_PREFIX=swiggy/reviews_parquet/input
+S3_ARCHIVE_PREFIX="swiggy/reviews_parquet/archive"
+S3_JSON_PREFIX="swiggy/parquet/archive"
 
 # Snowflake
 SNOWFLAKE_USER=your_user
@@ -117,6 +120,7 @@ SNOWFLAKE_DATABASE=your_db
 SNOWFLAKE_SCHEMA=your_schema
 SNOWFLAKE_ROLE=SYSADMIN
 SNOWFLAKE_STAGE=amazon_stage
+SNOWFLAKE_STAGE_SWIGGY=swiggy_stage
 
 # MySQL
 MYSQL_HOST=localhost
@@ -234,11 +238,11 @@ airflow webserver
 
 ```mermaid
 flowchart TD
-    A[JSON] --> B[export_mysql_to_parquet.py]
-    B --> C[transform_parquet_data_mysql.py]
-    C --> D[upload_to_s3_mysql.py]
-    D --> E[load_to_warehouse_mysql.py]
-    E --> F[archive_mysql_files_in_s3.py]
+    A[JSON] --> B[ingest_json_to_parquet.py]
+    B --> C[transform_parquet_data_json.py]
+    C --> D[upload_to_s3_json.py]
+    D --> E[load_to_warehouse_json.py]
+    E --> F[archive_json_files_in_s3.py]
     F --> G[Snowflake]
 ```
 
