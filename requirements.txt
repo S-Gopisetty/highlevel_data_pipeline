@@ -1,3 +1,4 @@
+# Generic Packages
 pandas
 pyarrow>=12.0.0
 ijson>=3.2.0
@@ -11,5 +12,8 @@ tenacity>=8.2.2
 # MySQL connector
 pymysql
 
-# Airflow (optional)
+# Airflow
 apache-airflow==2.7.3
+
+# Data validation
+pandera>=0.16.1
